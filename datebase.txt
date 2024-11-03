@@ -1,0 +1,40 @@
+import mistune
+import pymongo
+from pymongo import MongoClient
+
+def parse_and_insert_markdown(article_type,markdown_file_path):
+    # 读取Markdown文件内容
+    with open(markdown_file_path, "r", encoding="utf-8") as file:
+        markdown_content = file.read()
+
+    # 使用mistune库解析Markdown为HTML
+    renderer = mistune.create_markdown(renderer='html')
+    html_result = renderer(markdown_content)
+
+    # 连接MongoDB
+    client = pymongo.MongoClient("mongodb://localhost:27017/")
+    db = client["wikiDB"]
+    collection = db["wikis"]
+
+    # 创建要插入MongoDB的文档
+    document = {
+        article_type: markdown_content,
+        "html_result": html_result
+    }
+
+    # 将文档插入到MongoDB集合中
+    collection.insert_one(document)
+
+if __name__ == "__main__":
+    # 处理不同类型的Markdown文件
+    articles = [
+        {"type": "ecological_civilization_news", "path": "Article\\EcologicalCivilizationNews.md"},
+        {"type": "water_resources", "path": "Article\\WaterResources.md"},
+        {"type": "forest_resources", "path": "Article\\ForestResources.md"},
+        {"type": "mineral_resources", "path": "Article\\MineralResources.md"},
+        {"type": "community_participation", "path": "Article\\CommunityParticipation.md"},
+        {"type": "government_policy", "path": "Article\\GovernmentPolicy.md"},
+        {"type": "international_cooperation", "path": "Article\\InternationalCooperation.md"},
+    ]
+    for article in articles:
+        parse_and_insert_markdown(article["type"], article["path"])
